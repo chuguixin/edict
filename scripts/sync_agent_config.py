@@ -24,12 +24,6 @@ ID_LABEL = {
         "duty": "飞书消息分拣与回奏",
         "emoji": "🤴",
     },
-    "main": {
-        "label": "太子",
-        "role": "太子",
-        "duty": "飞书消息分拣与回奏",
-        "emoji": "🤴",
-    },  # 兼容旧配置
     "zhongshu": {
         "label": "中书省",
         "role": "中书令",
@@ -228,27 +222,12 @@ def main():
         )
         seen_ids.add(ag_id)
 
-    # 补充不在 openclaw.json agents list 中的 agent（兼容旧版 main）
+    # 补充不在 openclaw.json agents list 中的 agent
     EXTRA_AGENTS = {
         "taizi": {
             "model": default_model,
             "workspace": str(pathlib.Path.home() / ".openclaw/workspace-taizi"),
             "allowAgents": ["zhongshu"],
-        },
-        "main": {
-            "model": default_model,
-            "workspace": str(pathlib.Path.home() / ".openclaw/workspace-main"),
-            "allowAgents": [
-                "zhongshu",
-                "menxia",
-                "shangshu",
-                "hubu",
-                "libu",
-                "bingbu",
-                "xingbu",
-                "gongbu",
-                "libu_hr",
-            ],
         },
         "zaochao": {
             "model": default_model,
@@ -340,21 +319,6 @@ def sync_scripts_to_workspaces():
             if src_text != dst_text:
                 dst_file.write_bytes(src_text)
                 synced += 1
-    # also sync to workspace-main for legacy compatibility
-    ws_main_scripts = pathlib.Path.home() / ".openclaw/workspace-main/scripts"
-    ws_main_scripts.mkdir(parents=True, exist_ok=True)
-    for src_file in scripts_src.iterdir():
-        if src_file.suffix not in (".py", ".sh") or src_file.stem.startswith("__"):
-            continue
-        dst_file = ws_main_scripts / src_file.name
-        try:
-            src_text = src_file.read_bytes()
-            dst_text = dst_file.read_bytes() if dst_file.exists() else b""
-            if src_text != dst_text:
-                dst_file.write_bytes(src_text)
-                synced += 1
-        except Exception:
-            pass
     if synced:
         log.info(f"{synced} script files synced to workspaces")
 
@@ -378,16 +342,6 @@ def deploy_soul_files():
         if src_text != dst_text:
             ws_dst.write_text(src_text, encoding="utf-8")
             deployed += 1
-        # 太子兼容：同步一份到 legacy main agent 目录
-        if runtime_id == "taizi":
-            ag_dst = pathlib.Path.home() / ".openclaw/agents/main/SOUL.md"
-            ag_dst.parent.mkdir(parents=True, exist_ok=True)
-            try:
-                ag_text = ag_dst.read_text(encoding="utf-8", errors="ignore")
-            except FileNotFoundError:
-                ag_text = ""
-            if src_text != ag_text:
-                ag_dst.write_text(src_text, encoding="utf-8")
         # 确保 sessions 目录存在
         sess_dir = pathlib.Path.home() / f".openclaw/agents/{runtime_id}/sessions"
         sess_dir.mkdir(parents=True, exist_ok=True)
