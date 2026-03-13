@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore, DEPTS, isEdict, stateLabel } from '../store';
 import { api, type OfficialInfo } from '../api';
 
@@ -165,6 +165,189 @@ export default function MonitorPanel() {
             </div>
           );
         })}
+      </div>
+
+      {/* Org Chart */}
+      <OrgChart 
+        agentsStatusData={agentsStatusData} 
+        officialsData={officialsData} 
+        tasks={activeTasks} 
+      />
+    </div>
+  );
+}
+
+interface OrgChartProps {
+  agentsStatusData: any;
+  officialsData: any;
+  tasks: any[];
+}
+
+interface LineData {
+  id: string;
+  from: string;
+  to: string;
+  color: string;
+  active: boolean;
+  dashed?: boolean;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+function OrgChart({ agentsStatusData, officialsData, tasks }: OrgChartProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [lines, setLines] = useState<LineData[]>([]);
+
+  const getAgent = (id: string) => agentsStatusData?.agents?.find((a: { id: string; [key: string]: any }) => a.id === id);
+  const getOfficial = (id: string) => officialsData?.officials?.find((o: { id: string; [key: string]: any }) => o.id === id);
+
+  const renderNode = (id: string, defaultLabel: string, defaultEmoji: string, defaultRole: string, type: 'taizi' | 'secondary' | 'exec' | 'independent') => {
+    const agent = getAgent(id);
+    const official = getOfficial(id);
+    
+    const label = agent?.label || official?.label || defaultLabel;
+    const emoji = agent?.emoji || official?.emoji || defaultEmoji;
+    const role = agent?.role || official?.role || defaultRole;
+    const status = agent?.status || 'unconfigured';
+    const lastActive = agent?.lastActive || official?.last_active;
+
+    return (
+      <div 
+        id={`org-node-${id}`} 
+        className={`org-node org-node--${type}`}
+      >
+        <div className={`org-status-dot ${status}`} />
+        <span className="org-emoji">{emoji}</span>
+        <span className="org-label">{label}</span>
+        <span className="org-rank">{role}</span>
+        {lastActive && <span className="org-last-active">{lastActive}</span>}
+      </div>
+    );
+  };
+
+  useEffect(() => {
+    let rafId: number;
+    const updateLines = () => {
+      rafId = requestAnimationFrame(() => {
+        if (!containerRef.current) return;
+        const containerRect = containerRef.current.getBoundingClientRect();
+        
+        const connections = [
+          { id: 'taizi-zhongshu', from: 'taizi', to: 'zhongshu', color: '#a07aff', active: tasks.some(t => t.state === 'Zhongshu') },
+          { id: 'taizi-menxia', from: 'taizi', to: 'menxia', color: '#a07aff', active: tasks.some(t => t.state === 'Menxia') },
+          { id: 'taizi-shangshu', from: 'taizi', to: 'shangshu', color: '#a07aff', active: tasks.some(t => t.state === 'Review' || t.state === 'Assigned') },
+          { id: 'taizi-gongbu', from: 'taizi', to: 'gongbu', color: '#6a9eff', active: tasks.some(t => t.state === 'Doing' && t.org === '工部') },
+          { id: 'taizi-bingbu', from: 'taizi', to: 'bingbu', color: '#6a9eff', active: tasks.some(t => t.state === 'Doing' && t.org === '兵部') },
+          { id: 'taizi-hubu', from: 'taizi', to: 'hubu', color: '#6a9eff', active: tasks.some(t => t.state === 'Doing' && t.org === '户部') },
+          { id: 'taizi-libu', from: 'taizi', to: 'libu', color: '#6a9eff', active: tasks.some(t => t.state === 'Doing' && t.org === '礼部') },
+          { id: 'taizi-xingbu', from: 'taizi', to: 'xingbu', color: '#6a9eff', active: tasks.some(t => t.state === 'Doing' && t.org === '刑部') },
+          { id: 'taizi-hanlin', from: 'taizi', to: 'hanlin', color: '#6a9eff', active: tasks.some(t => t.state === 'Doing' && t.org === '翰林院') },
+          { id: 'taizi-libu_hr', from: 'taizi', to: 'libu_hr', color: '#9b59b6', dashed: true, active: false },
+        ];
+
+        const newLines = connections.map(conn => {
+          const fromNode = document.getElementById(`org-node-${conn.from}`);
+          const toNode = document.getElementById(`org-node-${conn.to}`);
+          
+          if (!fromNode || !toNode) return null;
+          
+          const fromRect = fromNode.getBoundingClientRect();
+          const toRect = toNode.getBoundingClientRect();
+          
+          const x1 = fromRect.left + fromRect.width / 2 - containerRect.left;
+          const y1 = fromRect.top + fromRect.height / 2 - containerRect.top;
+          const x2 = toRect.left + toRect.width / 2 - containerRect.left;
+          const y2 = toRect.top + toRect.height / 2 - containerRect.top;
+          
+          return { ...conn, x1, y1, x2, y2 } as LineData;
+        }).filter((l): l is LineData => Boolean(l));
+        
+        setLines(newLines);
+      });
+    };
+
+    updateLines();
+    setTimeout(updateLines, 100);
+    setTimeout(updateLines, 500);
+    
+    const observer = new ResizeObserver(updateLines);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    window.addEventListener('resize', updateLines);
+    
+    return () => {
+      cancelAnimationFrame(rafId);
+      observer.disconnect();
+      window.removeEventListener('resize', updateLines);
+    };
+  }, [tasks, agentsStatusData, officialsData]);
+
+  return (
+    <div className="org-chart" ref={containerRef}>
+      <div className="org-title">🏯 Agent 组织架构</div>
+
+      <svg className="org-svg-layer">
+        {lines.map((line) => (
+          <g key={line.id}>
+            <line
+              x1={line.x1} y1={line.y1}
+              x2={line.x2} y2={line.y2}
+              stroke={line.color}
+              strokeWidth={line.active ? 2.5 : 1}
+              strokeOpacity={line.active ? 1 : 0.35}
+              strokeDasharray={line.dashed ? '5,5' : undefined}
+              className={`org-line ${line.active ? 'org-line--active' : ''}`}
+            />
+            {line.active && (
+              <circle r="3.5" fill={line.color} filter={`drop-shadow(0 0 5px ${line.color})`}>
+                <animateMotion
+                  dur="1.2s"
+                  repeatCount="indefinite"
+                  path={`M ${line.x1} ${line.y1} L ${line.x2} ${line.y2}`}
+                />
+              </circle>
+            )}
+          </g>
+        ))}
+      </svg>
+
+      <div className="org-body">
+        <div className="org-row org-top">
+          {renderNode('taizi', '太子', '🤴', '唯一入口 · 全程协调', 'taizi')}
+        </div>
+
+        <div className="org-row org-flat">
+          <div className="org-group">
+            <div className="org-group-label">按需调用</div>
+            <div className="org-group-nodes">
+              {renderNode('zhongshu', '中书省', '📜', '方案设计', 'secondary')}
+              {renderNode('menxia', '门下省', '🔍', '方案Review', 'secondary')}
+              {renderNode('shangshu', '尚书省', '📮', '验收汇总', 'secondary')}
+            </div>
+          </div>
+
+          <div className="org-group-divider" />
+
+          <div className="org-group">
+            <div className="org-group-label">并行执行</div>
+            <div className="org-group-nodes">
+              {renderNode('gongbu',  '工部',   '🔧', '工程交付', 'exec')}
+              {renderNode('bingbu',  '兵部',   '⚔️', '应急巡检', 'exec')}
+              {renderNode('hubu',    '户部',   '💰', '资源预算', 'exec')}
+              {renderNode('libu',    '礼部',   '📝', '文档汇报', 'exec')}
+              {renderNode('xingbu',  '刑部',   '⚖️', '合规审计', 'exec')}
+              {renderNode('hanlin',  '翰林院', '📚', '调研搜索', 'exec')}
+            </div>
+          </div>
+        </div>
+
+        <div className="org-row org-independent">
+          <div className="org-independent-label">独立运行</div>
+          {renderNode('libu_hr', '吏部', '👔', '系统巡检·保活', 'independent')}
+        </div>
       </div>
     </div>
   );
