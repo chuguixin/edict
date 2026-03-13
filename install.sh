@@ -62,7 +62,19 @@ cfg = json.loads(cfg_path.read_text())
 
 # 定义 2026 三省六部核心架构
 AGENTS = [
-    {"id": "taizi",    "default": True,  "subagents": {"allowAgents": ["zhongshu", "hanlin", "zaochao"]}},
+    {"id": "taizi", "default": True, "subagents": {"allowAgents": ['zhongshu', 'menxia', 'gongbu', 'bingbu', 'hubu', 'libu', 'xingbu', 'hanlin', 'shangshu', 'libu_hr']}},
+    {"id": "zhongshu", "default": False, "subagents": {"allowAgents": []}},
+    {"id": "menxia", "default": False, "subagents": {"allowAgents": []}},
+    {"id": "shangshu", "default": False, "subagents": {"allowAgents": []}},
+    {"id": "bingbu", "default": False, "subagents": {"allowAgents": []}},
+    {"id": "hubu", "default": False, "subagents": {"allowAgents": []}},
+    {"id": "libu", "default": False, "subagents": {"allowAgents": []}},
+    {"id": "xingbu", "default": False, "subagents": {"allowAgents": []}},
+    {"id": "gongbu", "default": False, "subagents": {"allowAgents": []}},
+    {"id": "hanlin", "default": False, "subagents": {"allowAgents": []}},
+    {"id": "libu_hr", "default": False, "subagents": {"allowAgents": ['gongbu', 'bingbu', 'hubu', 'libu', 'xingbu', 'hanlin']}},
+    {"id": "zaochao", "default": False, "subagents": {"allowAgents": []}}
+]}},
     {"id": "zhongshu", "default": False, "subagents": {"allowAgents": ["menxia", "shangshu"]}},
     {"id": "menxia",   "default": False, "subagents": {"allowAgents": ["shangshu", "zhongshu"]}},
     {"id": "shangshu", "default": False, "subagents": {"allowAgents": ["hubu", "libu", "bingbu", "xingbu", "gongbu", "libu_hr", "hanlin"]}},
