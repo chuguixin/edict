@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <sub>12 AI agents (11 business roles + 1 compatibility role) form the Three Departments & Six Ministries: Crown Prince triages, Planning proposes, Review vetoes, Dispatch assigns, Ministries execute.<br>Built-in <b>institutional review gates</b> that CrewAI doesn't have. A <b>real-time dashboard</b> that AutoGen doesn't have.</sub>
+  <sub>12 specialized AI agents form the governance model: Crown Prince triages/researches, Planning proposes, Review vetoes, Dispatch assigns, Ministries execute, Qintianjian aggregates.<br>Built-in <b>institutional review gates</b> that CrewAI doesn't have. A <b>real-time dashboard</b> that AutoGen doesn't have.</sub>
 </p>
 
 <p align="center">
@@ -135,7 +135,7 @@ This repository is a modernized, enhanced fork of the original architecture. It 
 ### 🏛️ Twelve-Department Agent Architecture
 - **Crown Prince** (太子) message triage — auto-reply casual chat, create tasks for real commands
 - **Three Departments** (Planning · Review · Dispatch) for governance
-- **Seven Ministries** (Finance · Docs · Engineering · Compliance · Infrastructure · HR + Briefing) for execution
+- **Six Ministries & Academies** (Finance · Docs · Engineering · Compliance · Infrastructure · HR + Hanlin + Qintianjian) for execution
 - Strict permission matrix — who can message whom is enforced
 - Each agent: own workspace, own skills, own LLM model
 - **Data sanitization** — auto-strips file paths, metadata, invalid prefixes from titles/remarks
@@ -299,17 +299,20 @@ flowchart TD
 | ⚖️ **Compliance** | `xingbu` | Security, compliance, audit | Security scanning |
 | 🔧 **Infrastructure** | `gongbu` | CI/CD, deploy, tooling | Docker, pipelines |
 | 📋 **HR** | `libu_hr` | Agent management, training | Registration, permissions |
-| 🌅 **Briefing** | `zaochao` | Daily briefing, news | Scheduled reports, summaries |
+| 📚 **Hanlin Academy** | `hanlin` | Research, info collection | Web search, tech evaluation |
+| 📰 **Qintianjian** | `zaochao` | Daily Court, News Aggregation | Timed broadcasts, world news |
 
 ### Permission Matrix
 
-| From ↓ \ To → | Prince | Planning | Review | Dispatch | Ministries |
-|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Crown Prince** | — | ✅ | | | |
-| **Planning** | ✅ | — | ✅ | ✅ | |
-| **Review** | | ✅ | — | ✅ | |
-| **Dispatch** | | ✅ | ✅ | — | ✅ all |
-| **Ministries** | | | | ✅ | |
+| From ↓ \ To → | Prince | Planning | Review | Dispatch | Ministries | Hanlin | Qintianjian |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Crown Prince** | — | ✅ | | | | ✅ | ✅ |
+| **Planning** | ✅ | — | ✅ | ✅ | | | |
+| **Review** | | ✅ | — | ✅ | | | |
+| **Dispatch** | | ✅ | ✅ | — | ✅ all | | |
+| **Ministries** | | | | ✅ | | | |
+| **Hanlin** | ✅ | | | | | — | |
+| **Qintianjian**| | | | | | | — |
 
 ### State Machine
 
