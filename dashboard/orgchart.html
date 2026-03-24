@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三省六部组织架构图</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #07090f;
+      color: #dde4f8;
+      font-family: "PingFang SC", Inter, -apple-system, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .org-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .org-title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 30px;
+      text-align: center;
+      background: linear-gradient(135deg, #6a9eff, #a07aff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    /* 组织架构图样式 - 三层扁平结构 */
+    .org-chart {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 80px;
+      padding-top: 20px;
+    }
+    
+    /* 层级行 */
+    .org-level {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      position: relative;
+      width: 100%;
+    }
+    
+    /* 连接线容器 */
+    .level-connector {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      right: 0;
+      height: 40px;
+      pointer-events: none;
+    }
+    
+    /* 竖线 */
+    .connector-v {
+      position: absolute;
+      width: 2px;
+      background: #1c2236;
+      top: 0;
+      height: 40px;
+    }
+    
+    /* 横线 */
+    .connector-h {
+      position: absolute;
+      height: 2px;
+      background: #1c2236;
+      top: 0;
+    }
+    
+    /* 节点 */
+    .org-node {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 2px solid;
+      min-width: 160px;
+      max-width: 200px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      background: #0f1219;
+      z-index: 1;
+    }
+    
+    .org-node:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(106, 158, 255, 0.25);
+    }
+    
+    .org-node .emoji {
+      font-size: 28px;
+      margin-bottom: 6px;
+      line-height: 1;
+    }
+    
+    .org-node .name {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .org-node .role {
+      font-size: 11px;
+      color: #5a6b92;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    
+    .org-node .info {
+      font-size: 10px;
+      color: #5a6b92;
+      line-height: 1.5;
+      border-top: 1px solid #1c2236;
+      padding-top: 10px;
+      margin-top: 4px;
+      width: 100%;
+    }
+    
+    .org-node .info-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 3px 0;
+    }
+    
+    /* 颜色定义 */
+    .org-node.emperor {
+      border-color: #f5c842;
+      background: linear-gradient(135deg, rgba(245, 200, 66, 0.15), rgba(255, 154, 60, 0.15));
+    }
+    .org-node.emperor .name { color: #f5c842; }
+    
+    .org-node.taizi {
+      border-color: #6a9eff;
+      background: linear-gradient(135deg, rgba(106, 158, 255, 0.15), rgba(160, 122, 255, 0.15));
+    }
+    .org-node.taizi .name { color: #6a9eff; }
+    
+    .org-node.sheng {
+      border-color: #2ecc8a;
+      background: linear-gradient(135deg, rgba(46, 204, 138, 0.15), rgba(39, 174, 96, 0.15));
+    }
+    .org-node.sheng .name { color: #2ecc8a; }
+    
+    .org-node.bu {
+      border-color: #44aaff;
+      background: linear-gradient(135deg, rgba(68, 170, 255, 0.15), rgba(41, 128, 185, 0.15));
+    }
+    .org-node.bu .name { color: #44aaff; }
+    
+    .org-node.hanlin {
+      border-color: #9b59b6;
+      background: linear-gradient(135deg, rgba(155, 89, 182, 0.15), rgba(142, 68, 173, 0.15));
+    }
+    .org-node.hanlin .name { color: #9b59b6; }
+    
+    .org-node.zaochao {
+      border-color: #e74c3c;
+      background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.15));
+    }
+    .org-node.zaochao .name { color: #e74c3c; }
+    
+    /* 状态指示 */
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+    }
+    .status-dot.active { 
+      background: #2ecc8a; 
+      box-shadow: 0 0 8px #2ecc8a;
+    }
+    .status-dot.idle { background: #3a4a5a; }
+    .status-dot.busy { 
+      background: #f5c842; 
+      box-shadow: 0 0 8px #f5c842;
+    }
+    
+    /* 第三层特殊布局 - 分组显示 */
+    .level3-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .level3-group-title {
+      font-size: 11px;
+      color: #5a6b92;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 5px;
+    }
+    
+    .level3-row {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    /* 连接线SVG */
+    .org-lines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .org-lines line {
+      stroke: #1c2236;
+      stroke-width: 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="org-container">
+    <div class="org-title">🏛️ 三省六部组织架构</div>
+    
+    <!-- SVG连接线层 -->
+    <svg class="org-lines" id="orgLines">
+      <!-- 动态生成连接线 -->
+    </svg>
+    
+    <div class="org-chart" id="orgChart">
+      <!-- 第一层：皇上 -->
+      <div class="org-level" id="level1">
+        <div class="org-node emperor" data-id="emperor">
+          <span class="status-dot active"></span>
+          <div class="emoji">👑</div>
+          <div class="name">皇上</div>
+          <div class="role">最高决策者</div>
+          <div class="info">
+            <div class="info-item"><span>旨意:</span><span id="emperor-edicts">-</span></div>
+            <div class="info-item"><span>待办:</span><span id="emperor-pending">-</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 第二层：太子 -->
+      <div class="org-level" id="level2">
+        <div class="org-node taizi" data-id="taizi">
+          <span class="status-dot active"></span>
+          <div class="emoji">🤴</div>
+          <div class="name">太子</div>
+          <div class="role">皇上代理 · 分拣协调</div>
+          <div class="info">
+            <div class="info-item"><span>状态:</span><span id="taizi-status">运行中</span></div>
+            <div class="info-item"><span>处理:</span><span id="taizi-tasks">-</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 第三层：三省六部 + 翰林院 + 钦天监 -->
+      <div class="org-level" id="level3">
+        <!-- 三省 -->
+        <div class="level3-group">
+          <div class="level3-row">
+            <div class="org-node sheng" data-id="zhongshu">
+              <span class="status-dot" id="zhongshu-dot"></span>
+              <div class="emoji">📜</div>
+              <div class="name">中书省</div>
+              <div class="role">起草方案</div>
+              <div class="info">
+                <div class="info-item"><span>模型:</span><span id="zhongshu-model">-</span></div>
+                <div class="info-item"><span>任务:</span><span id="zhongshu-tasks">-</span></div>
+              </div>
+            </div>
+            
+            <div class="org-node sheng" data-id="menxia">
+              <span class="status-dot" id="menxia-dot"></span>
+              <div class="emoji">🔍</div>
+              <div class="name">门下省</div>
+              <div class="role">审议封驳</div>
+              <div class="info">
+                <div class="info-item"><span>模型:</span><span id="menxia-model">-</span></div>
+                <div class="info-item"><span>任务:</span><span id="menxia-tasks">-</span></div>
+              </div>
+            </div>
+            
+            <div class="org-node sheng" data-id="shangshu">
+              <span class="status-dot" id="shangshu-dot"></span>
+              <div class="emoji">📮</div>
+              <div class="name">尚书省</div>
+              <div class="role">派发验收</div>
+              <div class="info">
+                <div class="info-item"><span>模型:</span><span id="shangshu-model">-</span></div>
+                <div class="info-item"><span>任务:</span><span id="shangshu-tasks">-</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 六部 -->
+        <div class="level3-group">
+          <div class="level3-row">
+            <div class="org-node bu" data-id="libu">
+              <span class="status-dot" id="libu-dot"></span>
+              <div class="emoji">📝</div>
+              <div class="name">礼部</div>
+              <div class="role">文档/UI/对外</div>
+              <div class="info">
+                <div class="info-item"><span>模型:</span><span id="libu-model">-</span></div>
+                <div class="info-item"><span>任务:</span><span id="libu-tasks">-</span></div>
+              </div>
+            </div>
+            
+            <div class="org-node bu" data-id="hubu">
+              <span class="status-dot" id="hubu-dot"></span>
+              <div class="emoji">💰</div>
+              <div class="name">户部</div>
+              <div class="role">数据分析/报表</div>
+              <div class="info">
+                <div class="info-item"><span>模型:</span><span id="hubu-model">-</span></div>
+                <div class="info-item"><span>任务:</span><span id="hubu-tasks">-</span></div>
+              </div>
+            </div>
+            
+            <div class="org-node bu" data-id="bingbu">
+              <span class="status-dot" id="bingbu-dot"></span>
+              <div class="emoji">⚔️</div>
+              <div class="name">兵部</div>
+              <div class="role">运维/部署/安全</div>
+              <div class="info">
+                <div class="info-item"><span>模型:</span><span id="bingbu-model">-</span></div>
+                <div class="info-item"><span>任务:</span><span id="bingbu-tasks">-</span></div>
+              </div>
+            </div>
+            
+            <div class="org-node bu" data-id="xingbu">
+              <span class="status-dot" id="xingbu-dot"></span>
+              <div class="emoji">⚖️</div>
+              <div class="name">刑部</div>
+              <div class="role">测试/审查/合规</div>
+              <div class="info">
+                <div class="info-item"><span>模型:</span><span id="xingbu-model">-</span></div>
+                <div class="info-item"><span>任务:</span><span id="xingbu-tasks">-</span></div>
+              </div>
+            </div>
+            
+            <div class="org-node bu" data-id="gongbu">
+              <span class="status-dot" id="gongbu-dot"></span>
+              <div class="emoji">🔧</div>
+              <div class="name">工部</div>
+              <div class="role">代码开发/架构</div>
+              <div class="info">
+                <div class="info-item"><span>模型:</span><span id="gongbu-model">-</span></div>
+                <div class="info-item"><span>任务:</span><span id="gongbu-tasks">-</span></div>
+              </div>
+            </div>
+            
+            <div class="org-node bu" data-id="libu_hr">
+              <span class="status-dot" id="libu_hr-dot"></span>
+              <div class="emoji">👔</div>
+              <div class="name">吏部</div>
+              <div class="role">人事/配置</div>
+              <div class="info">
+                <div class="info-item"><span>模型:</span><span id="libu_hr-model">-</span></div>
+                <div class="info-item"><span>任务:</span><span id="libu_hr-tasks">-</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 翰林院 + 钦天监 -->
+        <div class="level3-group">
+          <div class="level3-row">
+            <div class="org-node hanlin" data-id="hanlin">
+              <span class="status-dot" id="hanlin-dot"></span>
+              <div class="emoji">📚</div>
+              <div class="name">翰林院</div>
+              <div class="role">调研/搜索/信息</div>
+              <div class="info">
+                <div class="info-item"><span>模型:</span><span id="hanlin-model">-</span></div>
+                <div class="info-item"><span>任务:</span><span id="hanlin-tasks">-</span></div>
+              </div>
+            </div>
+            
+            <div class="org-node zaochao" data-id="zaochao">
+              <span class="status-dot" id="zaochao-dot"></span>
+              <div class="emoji">📰</div>
+              <div class="name">钦天监</div>
+              <div class="role">天下要闻/早报</div>
+              <div class="info">
+                <div class="info-item"><span>模型:</span><span id="zaochao-model">-</span></div>
+                <div class="info-item"><span>任务:</span><span id="zaochao-tasks">-</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 绘制连接线
+    function drawLines() {
+      const svg = document.getElementById('orgLines');
+      const level1 = document.getElementById('level1');
+      const level2 = document.getElementById('level2');
+      const level3 = document.getElementById('level3');
+      
+      if (!level1 || !level2 || !level3) return;
+      
+      const containerRect = document.querySelector('.org-container').getBoundingClientRect();
+      
+      // 获取节点位置
+      const emperor = level1.querySelector('.org-node');
+      const taizi = level2.querySelector('.org-node');
+      const level3Nodes = level3.querySelectorAll('.org-node');
+      
+      if (!emperor || !taizi) return;
+      
+      const emperorRect = emperor.getBoundingClientRect();
+      const taiziRect = taizi.getBoundingClientRect();
+      
+      const emperorX = emperorRect.left + emperorRect.width / 2 - containerRect.left;
+      const emperorY = emperorRect.bottom - containerRect.top;
+      const taiziX = taiziRect.left + taiziRect.width / 2 - containerRect.left;
+      const taiziY = taiziRect.top - containerRect.top;
+      const taiziBottom = taiziRect.bottom - containerRect.top;
+      
+      let lines = '';
+      
+      // 皇上到太子的线
+      lines += `<line x1="${emperorX}" y1="${emperorY}" x2="${taiziX}" y2="${taiziY}" />`;
+      
+      // 太子到第三层的线
+      level3Nodes.forEach(node => {
+        const nodeRect = node.getBoundingClientRect();
+        const nodeX = nodeRect.left + nodeRect.width / 2 - containerRect.left;
+        const nodeY = nodeRect.top - containerRect.top;
+        
+        // 从太子底部到节点顶部的竖线
+        lines += `<line x1="${taiziX}" y1="${taiziBottom}" x2="${taiziX}" y2="${taiziBottom + 20}" />`;
+        lines += `<line x1="${taiziX}" y1="${taiziBottom + 20}" x2="${nodeX}" y2="${taiziBottom + 20}" />`;
+        lines += `<line x1="${nodeX}" y1="${taiziBottom + 20}" x2="${nodeX}" y2="${nodeY}" />`;
+      });
+      
+      svg.innerHTML = lines;
+    }
+    
+    // 获取实时数据并更新架构图
+    async function updateOrgChart() {
+      try {
+        const response = await fetch('/api/live-status');
+        const data = await response.json();
+        
+        if (data.ok && data.tasks) {
+          const tasks = data.tasks;
+          
+          // 统计各agent任务数
+          const agentTasks = {};
+          const agentModels = {};
+          
+          tasks.forEach(task => {
+            const agent = task.org || task.agent;
+            if (agent) {
+              if (!agentTasks[agent]) agentTasks[agent] = {total: 0, active: 0 };
+              agentTasks[agent].total++;
+              if (task.state !== 'Done' && task.state !== 'Cancelled') {
+                agentTasks[agent].active++;
+              }
+            }
+            
+            // 提取模型信息
+            if (task.now && task.now.includes('模型')) {
+              const match = task.now.match(/模型\s*(\S+)/);
+              if (match && agent) {
+                agentModels[agent] = match[1];
+              }
+            }
+          });
+          
+          // 更新皇上信息
+          const totalEdicts = tasks.filter(t => t.id && t.id.startsWith('JJC-')).length;
+          const pendingEdicts = tasks.filter(t => t.id && t.id.startsWith('JJC-') && t.state !== 'Done' && t.state !== 'Cancelled').length;
+          const emperorEdicts = document.getElementById('emperor-edicts');
+          const emperorPending = document.getElementById('emperor-pending');
+          if (emperorEdicts) emperorEdicts.textContent = totalEdicts;
+          if (emperorPending) emperorPending.textContent = pendingEdicts;
+          
+          // 更新太子信息
+          const taiziTasks = document.getElementById('taizi-tasks');
+          if (taiziTasks) taiziTasks.textContent = tasks.filter(t => t.state === 'Taizi' || t.org === '太子').length;
+          
+          // 更新各agent信息
+          const agents = ['zhongshu', 'menxia', 'shangshu', 'libu', 'hubu', 'bingbu', 'xingbu', 'gongbu', 'libu_hr', 'hanlin', 'zaochao'];
+          agents.forEach(agent => {
+            const taskCount = agentTasks[agent] ? `${agentTasks[agent].active}/${agentTasks[agent].total}` : '0/0';
+            const model = agentModels[agent] || '默认';
+            
+            const taskEl = document.getElementById(`${agent}-tasks`);
+            const modelEl = document.getElementById(`${agent}-model`);
+            const dotEl = document.getElementById(`${agent}-dot`);
+            
+            if (taskEl) taskEl.textContent = taskCount;
+            if (modelEl) modelEl.textContent = model;
+            if (dotEl) {
+              dotEl.className = 'status-dot ' + (agentTasks[agent] && agentTasks[agent].active > 0 ? 'active' : 'idle');
+            }
+          });
+        }
+      } catch (e) {
+        console.error('更新架构图失败:', e);
+      }
+    }
+    
+    // 点击节点跳转
+    document.querySelectorAll('.org-node').forEach(node => {
+      node.addEventListener('click', () => {
+        const id = node.dataset.id;
+        if (id && id !== 'emperor') {
+          console.log('点击了:', id);
+          // 可以在这里添加跳转逻辑
+        }
+      });
+    });
+    
+    // 初始加载
+    window.addEventListener('load', () => {
+      drawLines();
+      updateOrgChart();
+    });
+    
+    // 窗口大小改变时重绘线条
+    window.addEventListener('resize', drawLines);
+    
+    // 定时更新
+    setInterval(updateOrgChart, 5000);
+  </script>
+</body>
+</html>
