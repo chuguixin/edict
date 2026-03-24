@@ -51,7 +51,7 @@
 </p>
 </details>
 
-> 🐳 **No OpenClaw?** Run `docker run -p 7891:7891 cft0808/edict` to try the full dashboard with simulated data.
+> 🐳 **No OpenClaw?** Run `docker run -p 8080:8080 cft0808/edict` to try the full dashboard with simulated data.
 
 ---
 
@@ -115,6 +115,21 @@ This is why Edict produces reliable results on complex tasks: there's a mandator
 
 ---
 
+
+### ⚔️ Differences: chuguixin/edict vs cft0808/edict
+
+This repository is a modernized, enhanced fork of the original architecture. It significantly improves visualization, UI/UX, and deployment compatibility:
+
+| Feature | cft0808/edict (Original) | **chuguixin/edict (This Repo)** |
+|---------|------------------------|-------------------------------|
+| **Visual Architecture** | Flat data lists | **Interactive "Org Chart"** (default home view with gradients) |
+| **First-load UX** | Defaults to Tasks Kanban | **Defaults to Org Chart overview** for quick structural navigation |
+| **Default Port** | `7891` | **`8080`** (Standardized web application port) |
+| **Panel Count** | 10 Panels | **12 Panels** (Added Org Chart & Court Discussion) |
+| **Deployment** | Heavily coupled to local OpenClaw config | **Native environment variable support** (`CI=true` etc) for CI/CD |
+| **UI Aesthetics** | Basic CSS cards | **Modern gradients, hover-scale animations, visual hierarchies** |
+
+
 ## ✨ Features
 
 ### 🏛️ Twelve-Department Agent Architecture
@@ -125,7 +140,7 @@ This is why Edict produces reliable results on complex tasks: there's a mandator
 - Each agent: own workspace, own skills, own LLM model
 - **Data sanitization** — auto-strips file paths, metadata, invalid prefixes from titles/remarks
 
-### 📋 Command Center Dashboard (10 Panels)
+### 📋 Command Center Dashboard (12 Panels)
 
 | Panel | Description |
 |-------|------------|
@@ -139,6 +154,8 @@ This is why Edict produces reliable results on complex tasks: there's a mandator
 | 🛠️ **Skills Config** | View installed skills, add new ones |
 | 💬 **Sessions** | Live session monitoring with channel labels |
 | 🎬 **Court Ceremony** | Immersive daily opening animation with stats |
+| 🏛️ **Org Chart** | Global view of emperor and all departments, interactive nodes |
+| 🏛️ **Court Discussion** | Multi-agent debate around specific issues, preserves logs |
 
 ---
 
@@ -189,9 +206,9 @@ This is why Edict produces reliable results on complex tasks: there's a mandator
 ### Docker
 
 ```bash
-docker run -p 7891:7891 cft0808/edict
+docker run -p 8080:8080 cft0808/edict
 ```
-Open http://localhost:7891
+Open http://localhost:8080
 
 ### Full Install
 
@@ -220,7 +237,7 @@ bash scripts/run_loop.sh
 python3 dashboard/server.py
 
 # Open browser
-open http://127.0.0.1:7891
+open http://127.0.0.1:8080
 ```
 
 > 📖 See [Getting Started Guide](docs/getting-started.md) for detailed walkthrough.
@@ -229,40 +246,43 @@ open http://127.0.0.1:7891
 
 ## 🏛️ Architecture
 
-```
-                           ┌───────────────────────────────────┐
-                           │         👑 Emperor (You)           │
-                           │     Feishu · Telegram · Signal     │
-                           └─────────────────┬─────────────────┘
-                                             │ Issue edict
-                           ┌─────────────────▼─────────────────┐
-                           │     👑 Crown Prince (太子)          │
-                           │   Triage: chat → reply / cmd → task │
-                           └─────────────────┬─────────────────┘
-                                             │ Forward edict
-                           ┌─────────────────▼─────────────────┐
-                           │      📜 Planning Dept (中书省)      │
-                           │     Receive → Plan → Decompose      │
-                           └─────────────────┬─────────────────┘
-                                             │ Submit for review
-                           ┌─────────────────▼─────────────────┐
-                           │       🔍 Review Dept (门下省)       │
-                           │     Audit → Approve / Reject 🚫     │
-                           └─────────────────┬─────────────────┘
-                                             │ Approved ✅
-                           ┌─────────────────▼─────────────────┐
-                           │      📮 Dispatch Dept (尚书省)      │
-                           │   Assign → Coordinate → Collect     │
-                           └───┬──────┬──────┬──────┬──────┬───┘
-                               │      │      │      │      │
-                         ┌─────▼┐ ┌───▼───┐ ┌▼─────┐ ┌───▼─┐ ┌▼─────┐
-                         │💰 Fin.│ │📝 Docs│ │⚔️ Eng.│ │⚖️ Law│ │🔧 Ops│
-                         │ 户部  │ │ 礼部  │ │ 兵部  │ │ 刑部 │ │ 工部  │
-                         └──────┘ └──────┘ └──────┘ └─────┘ └──────┘
-                                                               ┌──────┐
-                                                               │📋 HR  │
-                                                               │ 吏部  │
-                                                               └──────┘
+```mermaid
+flowchart TD
+    classDef emperor fill:#f5c842,stroke:#f5c842,color:#000,font-weight:bold,stroke-width:2px;
+    classDef taizi fill:#6a9eff,stroke:#6a9eff,color:#fff,font-weight:bold,stroke-width:2px;
+    classDef sheng fill:#2ecc8a,stroke:#2ecc8a,color:#fff,font-weight:bold,stroke-width:2px;
+    classDef bu fill:#44aaff,stroke:#44aaff,color:#fff,font-weight:bold,stroke-width:2px;
+    classDef hanlin fill:#9b59b6,stroke:#9b59b6,color:#fff,font-weight:bold,stroke-width:2px;
+    classDef zaochao fill:#e74c3c,stroke:#e74c3c,color:#fff,font-weight:bold,stroke-width:2px;
+
+    Emperor["👑 Emperor (You)<br/>(Feishu / Telegram / Signal)"]:::emperor
+    Taizi["🤴 Crown Prince (taizi)<br/>Triage / Task Creation"]:::taizi
+    Zhongshu["📜 Zhongshu (zhongshu)<br/>Planning / Breakdown"]:::sheng
+    Menxia["🔍 Menxia (menxia)<br/>Review / Approval"]:::sheng
+    Shangshu["📮 Shangshu (shangshu)<br/>Dispatch / Coordinate"]:::sheng
+    Hanlin["📚 Hanlin Academy (hanlin)<br/>Research / Search"]:::hanlin
+    Zaochao["📰 Qintianjian (zaochao)<br/>Daily News"]:::zaochao
+    
+    Hubu["💰 Hubu<br/>Data"]:::bu
+    Libu["📝 Libu<br/>Docs"]:::bu
+    Bingbu["⚔️ Bingbu<br/>Eng"]:::bu
+    Xingbu["⚖️ Xingbu<br/>Audit"]:::bu
+    Gongbu["🔧 Gongbu<br/>Code"]:::bu
+    LHr["👔 Libu_HR<br/>Config"]:::bu
+    
+    Emperor -->|"Edict"| Taizi
+    Taizi -->|"Dispatch"| Zhongshu
+    Taizi -->|"Search"| Hanlin
+    Taizi -->|"News"| Zaochao
+    Zhongshu -->|"Submit for Review"| Menxia
+    Menxia -->|"Reject 🚫"| Zhongshu
+    Menxia -->|"Approve ✅"| Shangshu
+    Shangshu --> Hubu
+    Shangshu --> Libu
+    Shangshu --> Bingbu
+    Shangshu --> Xingbu
+    Shangshu --> Gongbu
+    Shangshu --> LHr
 ```
 
 ### Agent Roles
@@ -351,7 +371,7 @@ edict/
 ### Phase 1 — Core Architecture ✅
 - [x] Twelve-department agent architecture + permissions
 - [x] Crown Prince triage layer (chat vs task auto-routing)
-- [x] Real-time dashboard (10 panels)
+- [x] Real-time dashboard (12 panels)
 - [x] Task stop / cancel / resume
 - [x] Memorial archive (5-phase timeline)
 - [x] Edict template library (9 presets)
