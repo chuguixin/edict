@@ -37,7 +37,7 @@ export const PIPE_STATE_IDX: Record<string, number> = {
 export const DEPT_COLOR: Record<string, string> = {
   '太子': '#e8a040', '中书省': '#a07aff', '门下省': '#6a9eff', '尚书省': '#6aef9a',
   '礼部': '#f5c842', '户部': '#ff9a6a', '兵部': '#ff5270', '刑部': '#cc4444',
-  '工部': '#44aaff', '吏部': '#9b59b6', '翰林院': '#34d399', '皇上': '#ffd700', '回奏': '#2ecc8a',
+  '工部': '#44aaff', '吏部': '#9b59b6', '皇上': '#ffd700', '回奏': '#2ecc8a',
 };
 
 export const STATE_LABEL: Record<string, string> = {
@@ -83,11 +83,12 @@ export function getPipeStatus(t: Task): PipeStatus[] {
 
 export type TabKey =
   | 'edicts' | 'monitor' | 'officials' | 'models'
-  | 'skills' | 'sessions' | 'memorials' | 'templates' | 'morning';
+  | 'skills' | 'sessions' | 'memorials' | 'templates' | 'morning' | 'court';
 
 export const TAB_DEFS: { key: TabKey; label: string; icon: string }[] = [
   { key: 'edicts',    label: '旨意看板', icon: '📜' },
-  { key: 'monitor',   label: '省部调度', icon: '🏛️' },
+  { key: 'court',     label: '朝堂议政', icon: '🏛️' },
+  { key: 'monitor',   label: '省部调度', icon: '🔌' },
   { key: 'officials', label: '官员总览', icon: '👔' },
   { key: 'models',    label: '模型配置', icon: '🤖' },
   { key: 'skills',    label: '技能配置', icon: '🎯' },
@@ -110,8 +111,7 @@ export const DEPTS = [
   { id: 'xingbu',   label: '刑部',   emoji: '⚖️', role: '刑部尚书', rank: '正二品' },
   { id: 'gongbu',   label: '工部',   emoji: '🔧', role: '工部尚书', rank: '正二品' },
   { id: 'libu_hr',  label: '吏部',   emoji: '👔', role: '吏部尚书', rank: '正二品' },
-  { id: 'hanlin',   label: '翰林院', emoji: '📚', role: '翰林学士', rank: '正三品' },
-  { id: 'zaochao',  label: '钦天监', emoji: '🌟', role: '朝报官',   rank: '正三品' },
+  { id: 'zaochao',  label: '钦天监', emoji: '📰', role: '朝报官',   rank: '正三品' },
 ];
 
 // ── Templates ──

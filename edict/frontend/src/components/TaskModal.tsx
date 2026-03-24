@@ -21,7 +21,6 @@ const AGENT_LABELS: Record<string, string> = {
   xingbu: '刑部',
   gongbu: '工部',
   libu_hr: '吏部',
-  hanlin: '翰林院',
   zaochao: '钦天监',
 };
 
