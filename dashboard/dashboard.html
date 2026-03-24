@@ -603,6 +603,29 @@
     .mem-cost{font-size:10px;color:var(--acc)}
     .mem-empty{text-align:center;padding:40px;color:var(--muted);font-size:13px}
 
+    /* ══ 组织架构图 ══ */
+    .org-chart{position:relative;width:100%;min-height:600px}
+    .org-chart svg{width:100%;height:100%}
+    .org-node{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 16px;border-radius:12px;border:2px solid;min-width:120px;text-align:center;cursor:pointer;transition:all .2s}
+    .org-node:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(106,158,255,.3)}
+    .org-node .emoji{font-size:24px;margin-bottom:4px}
+    .org-node .name{font-size:13px;font-weight:700}
+    .org-node .role{font-size:10px;color:var(--muted);margin-top:2px}
+    /* 皇上 */
+    .org-node.emperor{background:linear-gradient(135deg,#f5c842,#ff9a3c);border-color:#f5c842;color:#000}
+    /* 太子 */
+    .org-node.taizi{background:linear-gradient(135deg,#6a9eff,#a07aff);border-color:#6a9eff;color:#fff}
+    /* 三省 */
+    .org-node.sheng{background:linear-gradient(135deg,#2ecc8a,#27ae60);border-color:#2ecc8a;color:#fff}
+    /* 六部 */
+    .org-node.bu{background:linear-gradient(135deg,#44aaff,#2980b9);border-color:#44aaff;color:#fff}
+    /* 翰林院 */
+    .org-node.hanlin{background:linear-gradient(135deg,#9b59b6,#8e44ad);border-color:#9b59b6;color:#fff}
+    /* 钦天监 */
+    .org-node.zaochao{background:linear-gradient(135deg,#e74c3c,#c0392b);border-color:#e74c3c;color:#fff}
+    .org-line{stroke:var(--line);stroke-width:2;fill:none}
+    .org-line.active{stroke:var(--acc);stroke-width:3}
+
     /* memorial detail */
     .md-timeline{position:relative;padding-left:24px;margin:16px 0}
     .md-timeline::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--line)}
@@ -670,7 +693,8 @@
 
   <!-- TABS -->
   <div class="tabs">
-    <div class="tab active" data-tab="edicts">📜 旨意看板 <span class="tbadge" id="tb-e">0</span></div>
+    <div class="tab active" data-tab="orgchart">🏛️ 组织架构</div>
+    <div class="tab" data-tab="edicts">📜 旨意看板 <span class="tbadge" id="tb-e">0</span></div>
     <div class="tab" data-tab="monitor">🔭 省部调度 <span class="tbadge" id="tb-m">0</span></div>
     <div class="tab" data-tab="officials">👥 官员总览</div>
     <div class="tab" data-tab="models">⚙️ 模型配置</div>
@@ -681,8 +705,16 @@
     <div class="tab" data-tab="morning">📰 天下要闻</div>
   </div>
 
+  <!-- ══ 组织架构图 ══ -->
+  <div class="panel active" id="panel-orgchart">
+    <div class="sec-title" style="margin-bottom:14px">🏛️ 三省六部组织架构</div>
+    <div id="orgchart-container" style="width:100%;min-height:600px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;overflow:auto">
+      <div id="orgchart-svg" style="width:100%;height:100%"></div>
+    </div>
+  </div>
+
   <!-- ══ 旨意看板 ══ -->
-  <div class="panel active" id="panel-edicts">
+  <div class="panel" id="panel-edicts">
     <div class="archive-bar" id="archive-bar">
       <span class="ab-label">📋 筛选：</span>
       <button class="ab-btn active" data-filter="active" onclick="setEdictFilter('active')">🔥 进行中</button>
@@ -2751,6 +2783,7 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   if(activeTab==='sessions')renderSessions(liveStatus?liveStatus.tasks:[]);
   if(activeTab==='memorials')renderMemorials();
   if(activeTab==='templates')renderTemplates();
+  if(activeTab==='orgchart')renderOrgChart();
 }));
 
 /* ══ COUNTDOWN (5s) ══ */
@@ -3145,9 +3178,165 @@ async function executeTemplate(e, tplId){
   }
 }
 
+/* ══ ORG CHART ══ */
+function renderOrgChart(){
+  const container = document.getElementById('orgchart-svg');
+  if(!container) return;
+  
+  // 组织架构数据
+  const orgData = {
+    emperor: { name: '皇上', emoji: '👑', role: '最高决策者', class: 'emperor' },
+    taizi: { name: '太子', emoji: '🤴', role: '皇上代理 · 分拣协调', class: 'taizi' },
+    sheng: [
+      { name: '中书省', emoji: '📜', role: '起草方案', class: 'sheng' },
+      { name: '门下省', emoji: '🔍', role: '审议封驳', class: 'sheng' },
+      { name: '尚书省', emoji: '📮', role: '派发验收', class: 'sheng' }
+    ],
+    bu: [
+      { name: '礼部', emoji: '📝', role: '文档/UI', class: 'bu' },
+      { name: '户部', emoji: '💰', role: '数据分析', class: 'bu' },
+      { name: '兵部', emoji: '⚔️', role: '运维/安全', class: 'bu' },
+      { name: '刑部', emoji: '⚖️', role: '测试/审查', class: 'bu' },
+      { name: '工部', emoji: '🔧', role: '代码开发', class: 'bu' },
+      { name: '吏部', emoji: '👔', role: '人事/配置', class: 'bu' }
+    ],
+    hanlin: { name: '翰林院', emoji: '📚', role: '调研/搜索', class: 'hanlin' },
+    zaochao: { name: '钦天监', emoji: '📰', role: '天下要闻', class: 'zaochao' }
+  };
+  
+  // 创建SVG
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('width', '100%');
+  svg.setAttribute('height', '600');
+  svg.setAttribute('viewBox', '0 0 1200 600');
+  
+  // 绘制连接线
+  function drawLine(x1, y1, x2, y2){
+    const line = document.createElementNS(svgNS, 'line');
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    line.setAttribute('class', 'org-line');
+    svg.appendChild(line);
+  }
+  
+  // 绘制节点
+  function drawNode(x, y, data){
+    const g = document.createElementNS(svgNS, 'g');
+    g.setAttribute('transform', `translate(${x}, ${y})`);
+    g.setAttribute('class', 'org-node ' + data.class);
+    g.style.cursor = 'pointer';
+    
+    // 矩形背景
+    const rect = document.createElementNS(svgNS, 'rect');
+    rect.setAttribute('x', '-60');
+    rect.setAttribute('y', '-35');
+    rect.setAttribute('width', '120');
+    rect.setAttribute('height', '70');
+    rect.setAttribute('rx', '12');
+    rect.setAttribute('fill', 'var(--panel)');
+    rect.setAttribute('stroke', 'var(--line)');
+    rect.setAttribute('stroke-width', '2');
+    g.appendChild(rect);
+    
+    // emoji
+    const emoji = document.createElementNS(svgNS, 'text');
+    emoji.setAttribute('x', '0');
+    emoji.setAttribute('y', '-8');
+    emoji.setAttribute('text-anchor', 'middle');
+    emoji.setAttribute('font-size', '20');
+    emoji.textContent = data.emoji;
+    g.appendChild(emoji);
+    
+    // name
+    const name = document.createElementNS(svgNS, 'text');
+    name.setAttribute('x', '0');
+    name.setAttribute('y', '12');
+    name.setAttribute('text-anchor', 'middle');
+    name.setAttribute('font-size', '13');
+    name.setAttribute('font-weight', '700');
+    name.setAttribute('fill', '#fff');
+    name.textContent = data.name;
+    g.appendChild(name);
+    
+    // role
+    const role = document.createElementNS(svgNS, 'text');
+    role.setAttribute('x', '0');
+    role.setAttribute('y', '26');
+    role.setAttribute('text-anchor', 'middle');
+    role.setAttribute('font-size', '9');
+    role.setAttribute('fill', 'var(--muted)');
+    role.textContent = data.role;
+    g.appendChild(role);
+    
+    // 点击事件
+    g.addEventListener('click', ()=>{
+      // 切换到对应tab或显示详情
+      if(data.name === '皇上') return;
+      const tabMap = {'太子':'monitor','中书省':'monitor','门下省':'monitor','尚书省':'monitor','礼部':'monitor','户部':'monitor','兵部':'monitor','刑部':'monitor','工部':'monitor','吏部':'monitor','翰林院':'monitor','钦天监':'monitor'};
+      const tab = tabMap[data.name];
+      if(tab){
+        document.querySelector('.tab[data-tab="'+tab+'"]')?.click();
+      }
+    });
+    
+    svg.appendChild(g);
+    return {x, y};
+  }
+  
+  // 布局计算
+  const centerX = 600;
+  const startY = 50;
+  const levelHeight = 120;
+  
+  // 皇上
+  const emperorPos = drawNode(centerX, startY, orgData.emperor);
+  
+  // 太子
+  const taiziPos = drawNode(centerX, startY + levelHeight, orgData.taizi);
+  drawLine(centerX, startY + 35, centerX, startY + levelHeight - 35);
+  
+  // 三省
+  const shengStartX = centerX - 200;
+  const shengSpacing = 200;
+  orgData.sheng.forEach((s, i) => {
+    const x = shengStartX + i * shengSpacing;
+    const y = startY + levelHeight * 2;
+    drawNode(x, y, s);
+    drawLine(centerX, taiziPos.y + 35, x, y - 35);
+  });
+  
+  // 六部
+  const buStartX = centerX - 250;
+  const buSpacing = 100;
+  orgData.bu.forEach((b, i) => {
+    const x = buStartX + i * buSpacing;
+    const y = startY + levelHeight * 3;
+    drawNode(x, y, b);
+    // 连接到尚书省
+    drawLine(centerX + 200, startY + levelHeight * 2 + 35, x, y - 35);
+  });
+  
+  // 翰林院
+  const hanlinPos = drawNode(centerX - 350, startY + levelHeight * 2, orgData.hanlin);
+  drawLine(centerX, taiziPos.y + 35, hanlinPos.x, hanlinPos.y - 35);
+  
+  // 钦天监
+  const zaochaoPos = drawNode(centerX + 350, startY + levelHeight * 2, orgData.zaochao);
+  drawLine(centerX, taiziPos.y + 35, zaochaoPos.x, zaochaoPos.y - 35);
+  
+  container.innerHTML = '';
+  container.appendChild(svg);
+}
+
 /* ══ INIT ══ */
 restoreGlobalScanState();
-loadAll().then(()=>showCeremony());
+loadAll().then(()=>{
+  showCeremony();
+  renderOrgChart();
+});
 startCd();
 </script>
 </body>
